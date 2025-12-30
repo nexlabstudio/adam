@@ -289,7 +289,7 @@ class OpenApiGenerator {
     this.license = const {},
   });
 
-  /// Adds a route handler for documentation (legacy - single function).
+  /// Adds a route handler for documentation.
   ///
   /// The [path] should use OpenAPI format: `/users/{id}`
   /// The [handler] is the function that handles the route.
@@ -701,7 +701,7 @@ class OpenApiGenerator {
     return result;
   }
 
-  /// Legacy method for extracting route info from a single function.
+  /// Method for extracting route info from a single function.
   /// Used for manual addRoute() calls.
   _RouteInfo? _extractRouteInfoLegacy(Function handler) {
     final mirror = reflect(handler) as ClosureMirror;

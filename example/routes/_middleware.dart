@@ -2,11 +2,11 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_frog_openapi/dart_frog_openapi.dart';
 
 Handler middleware(Handler handler) {
-  final spec = OpenApiGenerator(
+  final spec = Volund(
     title: 'Example API',
     version: '1.0.0',
     description: 'A sample API with auto-discovered routes',
-  ).addBearerAuth().addRoutes(discoverRoutes()).generate();
+  ).addRoutes(discoverRoutesWithParams({'users/[id]': 'userId'})).generate();
 
   return handler
       .use(requestLogger())

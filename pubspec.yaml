@@ -1,10 +1,11 @@
 name: dart_frog_openapi
 description: OpenAPI/Swagger documentation for Dart Frog using reflection. No build_runner needed.
-version: 1.0.0
-repository: https://github.com/yourusername/dart_frog_openapi
+version: 0.1.0
+repository: https://github.com/nexlabstudio/adam
+issue_tracker: https://github.com/nexlabstudio/adam/issues
 
 environment:
-  sdk: ^3.10.0
+  sdk: ^3.8.0
 
 dependencies:
   dart_frog: ^1.0.0
