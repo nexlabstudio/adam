@@ -85,14 +85,23 @@ void _discoverHelperMethods(LibraryMirror library, _DiscoveredRoute route) {
 
     for (final meta in decl.metadata) {
       final annotation = meta.reflectee;
-      (httpMethod, operationAnnotation) = switch (annotation) {
-        Get() => ('GET', annotation),
-        Post() => ('POST', annotation),
-        Put() => ('PUT', annotation),
-        Delete() => ('DELETE', annotation),
-        Patch() => ('PATCH', annotation),
-        _ => (null, null),
-      };
+      switch (annotation) {
+        case Get():
+          httpMethod = 'GET';
+          operationAnnotation = annotation;
+        case Post():
+          httpMethod = 'POST';
+          operationAnnotation = annotation;
+        case Put():
+          httpMethod = 'PUT';
+          operationAnnotation = annotation;
+        case Delete():
+          httpMethod = 'DELETE';
+          operationAnnotation = annotation;
+        case Patch():
+          httpMethod = 'PATCH';
+          operationAnnotation = annotation;
+      }
     }
 
     // Only add if it has an HTTP method annotation
@@ -220,6 +229,8 @@ String _uriToApiPath(Uri uri) {
 Map<String, _DiscoveredRoute> discoverRoutesWithParams([Map<String, String>? paramNames]) {
   final routes = discoverRoutes();
 
+  print('Discovered routes: ${routes.keys}');
+
   if (paramNames == null || paramNames.isEmpty) {
     return routes;
   }
@@ -227,8 +238,27 @@ Map<String, _DiscoveredRoute> discoverRoutesWithParams([Map<String, String>? par
   final renamed = <String, _DiscoveredRoute>{};
 
   for (final entry in routes.entries) {
+    print('  ${entry.key}: methods=${entry.value.methods.keys}');
+
     var path = entry.key;
     final route = entry.value;
+
+    // Debug: show all declarations in the library
+    if (entry.key == '/users') {
+      print('  /users declarations:');
+      for (final decl in entry.value.library.declarations.entries) {
+        final name = MirrorSystem.getName(decl.key);
+        final type = decl.value.runtimeType;
+        print('    - $name ($type)');
+        if (decl.value is MethodMirror) {
+          final method = decl.value as MethodMirror;
+          print('      metadata count: ${method.metadata.length}');
+          for (final meta in method.metadata) {
+            print('      annotation: ${meta.reflectee.runtimeType}');
+          }
+        }
+      }
+    }
 
     // Apply custom param names
     for (final paramEntry in paramNames.entries) {
