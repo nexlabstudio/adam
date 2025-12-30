@@ -48,8 +48,7 @@ Middleware autoSwagger({
 
     generator.addRoutes(routes);
 
-    _cachedSpec = generator.generate();
-    return _cachedSpec!;
+    return _cachedSpec = generator.generate();
   }
 
   return (handler) => (context) async {
@@ -289,22 +288,14 @@ String _toYaml(Map<String, dynamic> data, [int indent = 0]) {
   return buffer.toString();
 }
 
-String _yamlValue(dynamic value) {
-  if (value == null) return 'null';
-  if (value is bool) return value.toString();
-  if (value is num) return value.toString();
-  if (value is String) {
-    if (value.isEmpty) return '""';
-    if (value.contains('\n') ||
-        value.contains(':') ||
-        value.contains('#') ||
-        value.contains('"') ||
-        value.contains("'") ||
-        value.startsWith(' ') ||
-        value.endsWith(' ')) {
-      return '"${value.replaceAll('"', r'\"').replaceAll('\n', r'\n')}"';
-    }
-    return value;
-  }
-  return value.toString();
-}
+String _yamlValue(dynamic value) => switch (value) {
+  bool b => '$b',
+  num n => '$n',
+  String s when s.isEmpty => '""',
+  String s when _needsQuotes(s) => '"${s.replaceAll('"', r'\"').replaceAll('\n', r'\n')}"',
+  String s => s,
+  null => 'null',
+  _ => value.toString(),
+};
+
+bool _needsQuotes(String s) => ['\n', ':', '#', '"', "'"].any(s.contains) || s.startsWith(' ') || s.endsWith(' ');
