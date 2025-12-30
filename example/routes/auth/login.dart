@@ -13,9 +13,11 @@ Future<Response> onRequest(RequestContext context) async {
     return Response(statusCode: 405);
   }
 
-  return Response.json(body: {
-    'accessToken': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock',
-    'refreshToken': 'mock-refresh-token',
-    'expiresIn': 3600,
-  });
+  return Response.json(
+    body: {
+      'accessToken': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock',
+      'refreshToken': 'mock-refresh-token',
+      'expiresIn': 3600,
+    },
+  );
 }

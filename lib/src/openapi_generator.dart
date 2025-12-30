@@ -565,8 +565,8 @@ class OpenApiGenerator {
       }
 
       // Request body
-      if (op.body != null) {
-        operation['requestBody'] = _buildRequestBody(op.body!);
+      if (op.body case final body? when ['POST', 'PUT', 'PATCH'].contains(op.method)) {
+        operation['requestBody'] = _buildRequestBody(body);
       }
 
       // Responses

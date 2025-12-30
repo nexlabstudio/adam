@@ -22,11 +22,7 @@ class TokenResponse {
   @ApiProperty(description: 'Expiry in seconds')
   final int expiresIn;
 
-  const TokenResponse({
-    required this.accessToken,
-    required this.refreshToken,
-    required this.expiresIn,
-  });
+  const TokenResponse({required this.accessToken, required this.refreshToken, required this.expiresIn});
 }
 
 @ApiSchema(description: 'Login credentials')

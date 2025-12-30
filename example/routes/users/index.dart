@@ -36,21 +36,23 @@ Future<Response> onRequest(RequestContext context) async {
 @BearerAuth()
 @OkResponse(description: 'List of users', schema: User, isArray: true)
 @UnauthorizedResponse(schema: ErrorResponse)
-Future<Response> _listUsers(RequestContext context) async => Response.json(body: {
-      'data': [
-        {
-          'id': '550e8400-e29b-41d4-a716-446655440000',
-          'email': 'john@example.com',
-          'name': 'John Doe',
-          'role': 'user',
-          'createdAt': DateTime.now().toIso8601String(),
-          'isActive': true,
-        }
-      ],
-      'total': 1,
-      'page': 1,
-      'pageSize': 20,
-    });
+Future<Response> _listUsers(RequestContext context) async => Response.json(
+  body: {
+    'data': [
+      {
+        'id': '550e8400-e29b-41d4-a716-446655440000',
+        'email': 'john@example.com',
+        'name': 'John Doe',
+        'role': 'user',
+        'createdAt': DateTime.now().toIso8601String(),
+        'isActive': true,
+      },
+    ],
+    'total': 1,
+    'page': 1,
+    'pageSize': 20,
+  },
+);
 
 @Post(summary: 'Create user', description: 'Register a new user')
 @Body(schema: CreateUserRequest)
@@ -58,13 +60,13 @@ Future<Response> _listUsers(RequestContext context) async => Response.json(body:
 @CreatedResponse(description: 'User created', schema: User)
 @BadRequestResponse(schema: ErrorResponse)
 Future<Response> _createUser(User user) async => Response.json(
-      statusCode: 201,
-      body: {
-        'id': '550e8400-e29b-41d4-a716-446655440001',
-        'email': user.email,
-        'name': user.name,
-        'role': 'user',
-        'createdAt': DateTime.now().toIso8601String(),
-        'isActive': true,
-      },
-    );
+  statusCode: 201,
+  body: {
+    'id': '550e8400-e29b-41d4-a716-446655440001',
+    'email': user.email,
+    'name': user.name,
+    'role': 'user',
+    'createdAt': DateTime.now().toIso8601String(),
+    'isActive': true,
+  },
+);

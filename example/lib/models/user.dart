@@ -45,11 +45,7 @@ class CreateUserRequest {
   @PasswordProperty(minLength: 8)
   final String password;
 
-  const CreateUserRequest({
-    required this.email,
-    required this.name,
-    required this.password,
-  });
+  const CreateUserRequest({required this.email, required this.name, required this.password});
 }
 
 @ApiSchema(description: 'Update user request')

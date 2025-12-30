@@ -25,24 +25,28 @@ import 'package:example/models/common.dart';
 Future<Response> onRequest(RequestContext context, String id) async {
   switch (context.request.method) {
     case HttpMethod.get:
-      return Response.json(body: {
-        'id': id,
-        'email': 'john@example.com',
-        'name': 'John Doe',
-        'role': 'user',
-        'createdAt': DateTime.now().toIso8601String(),
-        'isActive': true,
-      });
+      return Response.json(
+        body: {
+          'id': id,
+          'email': 'john@example.com',
+          'name': 'John Doe',
+          'role': 'user',
+          'createdAt': DateTime.now().toIso8601String(),
+          'isActive': true,
+        },
+      );
     case HttpMethod.put:
       final body = await context.request.json() as Map<String, dynamic>;
-      return Response.json(body: {
-        'id': id,
-        'email': 'john@example.com',
-        'name': body['name'] ?? 'John Doe',
-        'role': 'user',
-        'createdAt': DateTime.now().toIso8601String(),
-        'isActive': true,
-      });
+      return Response.json(
+        body: {
+          'id': id,
+          'email': 'john@example.com',
+          'name': body['name'] ?? 'John Doe',
+          'role': 'user',
+          'createdAt': DateTime.now().toIso8601String(),
+          'isActive': true,
+        },
+      );
     case HttpMethod.delete:
       return Response(statusCode: 204);
     default:
