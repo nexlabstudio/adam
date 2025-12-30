@@ -1,0 +1,16 @@
+name: example
+description: Example Dart Frog API with reflection-based OpenAPI documentation
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  dart_frog: ^1.0.0
+  dart_frog_openapi:
+    path: ../
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0
