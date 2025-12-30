@@ -3,6 +3,7 @@ import 'dart:mirrors';
 import 'annotations.dart';
 import 'schema_annotations.dart';
 import 'security_annotations.dart';
+import 'types.dart';
 
 /// Auto-discovers all route handlers in the application.
 ///
@@ -260,9 +261,9 @@ class OpenApiGenerator {
   final String title;
   final String version;
   final String? description;
-  final List<Map<String, String>> servers;
-  final Map<String, dynamic> contact;
-  final Map<String, dynamic> license;
+  final List<Server> servers;
+  final Contact? contact;
+  final License? license;
 
   final Map<String, _RouteInfo> _routes = {};
   final Map<String, Map<String, dynamic>> _schemas = {};
@@ -274,11 +275,9 @@ class OpenApiGenerator {
     required this.title,
     this.version = '1.0.0',
     this.description,
-    this.servers = const [
-      {'url': 'http://localhost:8080', 'description': 'Development'},
-    ],
-    this.contact = const {},
-    this.license = const {},
+    this.servers = const [Server(url: 'http://localhost:8080', description: 'Development')],
+    this.contact,
+    this.license,
   });
 
   /// Adds a route handler for documentation.
@@ -477,10 +476,10 @@ class OpenApiGenerator {
         'title': title,
         'version': version,
         'description': ?description,
-        if (contact.isNotEmpty) 'contact': contact,
-        if (license.isNotEmpty) 'license': license,
+        if (contact case final contact? when !contact.isEmpty) 'contact': contact.toJson(),
+        'license': ?license?.toJson(),
       },
-      'servers': servers,
+      'servers': servers.map((s) => s.toJson()).toList(),
     };
 
     // Tags

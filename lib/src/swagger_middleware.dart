@@ -1,6 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
 
 import 'openapi_generator.dart';
+import 'types.dart';
 
 /// All-in-one middleware: discovers routes, generates spec, serves Swagger UI.
 ///
@@ -20,7 +21,7 @@ Middleware autoSwagger({
   required String title,
   String version = '1.0.0',
   String? description,
-  List<Map<String, String>> servers = const [],
+  List<Server> servers = const [],
   String docsPath = '/docs',
   String specPath = '/openapi.json',
   bool bearerAuth = true,
@@ -28,7 +29,6 @@ Middleware autoSwagger({
   String? apiKeyHeader,
   Map<String, String>? paramNames,
 }) {
-  // Build spec lazily on first request
   Map<String, dynamic>? _cachedSpec;
 
   Map<String, dynamic> getSpec() {
@@ -38,11 +38,7 @@ Middleware autoSwagger({
       title: title,
       version: version,
       description: description,
-      servers: servers.isEmpty
-          ? [
-              {'url': 'http://localhost:8080', 'description': 'Development'},
-            ]
-          : servers,
+      servers: servers.isEmpty ? [Server(url: 'http://localhost:8080', description: 'Development')] : servers,
     );
 
     if (bearerAuth) generator.addBearerAuth();
@@ -59,17 +55,14 @@ Middleware autoSwagger({
   return (handler) => (context) async {
     final path = context.request.uri.path;
 
-    // Serve OpenAPI spec as JSON
     if (path == specPath) {
       return Response.json(body: getSpec());
     }
 
-    // Serve OpenAPI spec as YAML
     if (path == '$specPath.yaml' || path == '/openapi.yaml') {
       return Response(body: _toYaml(getSpec()), headers: {'Content-Type': 'text/yaml; charset=utf-8'});
     }
 
-    // Serve Swagger UI
     if (path == docsPath || path == '$docsPath/') {
       return Response(
         body: _swaggerHtml(title: title, specUrl: specPath),
@@ -102,17 +95,14 @@ Middleware swaggerUI({
     (handler) => (context) async {
       final path = context.request.uri.path;
 
-      // Serve OpenAPI spec as JSON
       if (path == specPath) {
         return Response.json(body: spec);
       }
 
-      // Serve OpenAPI spec as YAML
       if (specYamlPath != null && path == specYamlPath) {
         return Response(body: _toYaml(spec), headers: {'Content-Type': 'text/yaml; charset=utf-8'});
       }
 
-      // Serve Swagger UI
       if (path == docsPath || path == '$docsPath/') {
         return Response(
           body: _swaggerHtml(
