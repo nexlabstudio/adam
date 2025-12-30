@@ -36,17 +36,20 @@ Map<String, _DiscoveredRoute> discoverRoutes() {
     final apiPath = _uriToApiPath(uri);
     final route = _DiscoveredRoute(path: apiPath, library: library, onRequest: onRequestDecl);
 
-    // Extract @Api from onRequest
+    // Extract @Api and @PathParam from onRequest metadata
     for (final meta in onRequestDecl.metadata) {
       if (meta.reflectee is Api) {
         route.api = meta.reflectee as Api;
+      } else if (meta.reflectee is PathParam) {
+        final pathParam = meta.reflectee as PathParam;
+        route.pathParams[pathParam.name] = pathParam;
       }
     }
 
     // Extract @PathParam from onRequest parameters
     for (final param in onRequestDecl.parameters) {
       final paramName = MirrorSystem.getName(param.simpleName);
-      if (paramName == 'context') continue; // Skip RequestContext
+      if (paramName == 'context') continue;
 
       for (final meta in param.metadata) {
         if (meta.reflectee is PathParam) {
@@ -55,7 +58,6 @@ Map<String, _DiscoveredRoute> discoverRoutes() {
         }
       }
 
-      // Even without annotation, it's a path param
       if (!route.pathParams.containsKey(paramName)) {
         route.pathParams[paramName] = PathParam(paramName);
       }
@@ -229,8 +231,6 @@ String _uriToApiPath(Uri uri) {
 Map<String, _DiscoveredRoute> discoverRoutesWithParams([Map<String, String>? paramNames]) {
   final routes = discoverRoutes();
 
-  print('Discovered routes: ${routes.keys}');
-
   if (paramNames == null || paramNames.isEmpty) {
     return routes;
   }
@@ -238,27 +238,8 @@ Map<String, _DiscoveredRoute> discoverRoutesWithParams([Map<String, String>? par
   final renamed = <String, _DiscoveredRoute>{};
 
   for (final entry in routes.entries) {
-    print('  ${entry.key}: methods=${entry.value.methods.keys}');
-
     var path = entry.key;
     final route = entry.value;
-
-    // Debug: show all declarations in the library
-    if (entry.key == '/users') {
-      print('  /users declarations:');
-      for (final decl in entry.value.library.declarations.entries) {
-        final name = MirrorSystem.getName(decl.key);
-        final type = decl.value.runtimeType;
-        print('    - $name ($type)');
-        if (decl.value is MethodMirror) {
-          final method = decl.value as MethodMirror;
-          print('      metadata count: ${method.metadata.length}');
-          for (final meta in method.metadata) {
-            print('      annotation: ${meta.reflectee.runtimeType}');
-          }
-        }
-      }
-    }
 
     // Apply custom param names
     for (final paramEntry in paramNames.entries) {
