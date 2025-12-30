@@ -4,10 +4,10 @@ version: 1.0.0
 publish_to: none
 
 environment:
-  sdk: ^3.0.0
+  sdk: ^3.8.0
 
 dependencies:
-  dart_frog: ^1.0.0
+  dart_frog: ^1.2.6
   dart_frog_openapi:
     path: ../
 

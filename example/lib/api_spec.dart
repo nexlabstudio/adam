@@ -7,7 +7,7 @@ import 'package:example/models/common.dart';
 /// Generate the OpenAPI spec at runtime using reflection.
 ///
 /// Routes are auto-discovered - no manual imports needed!
-final apiSpec = OpenApiGenerator(
+final apiSpec = Volund(
   title: 'Example API',
   version: '1.0.0',
   description: '''
@@ -19,8 +19,8 @@ A sample API built with Dart Frog demonstrating OpenAPI documentation using refl
 - Auto-discovered routes
 ''',
   servers: [
-    {'url': 'http://localhost:8080', 'description': 'Development'},
-    {'url': 'https://api.example.com', 'description': 'Production'},
+    Server(url: 'http://localhost:8080', description: 'Development'),
+    Server(url: 'https://api.example.com', description: 'Production'),
   ],
 )
     // Security schemes
@@ -28,7 +28,7 @@ A sample API built with Dart Frog demonstrating OpenAPI documentation using refl
     .addApiKeyAuth()
 
     // Auto-discover all routes - no manual imports!
-    .addRoutes(discoverRoutes())
+    .addRoutes(discoverRoutesWithParams({'users/[id]': 'userId'}))
 
     // Register schemas (optional - auto-discovered from responses/bodies)
     .addSchema<User>()

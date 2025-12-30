@@ -91,7 +91,7 @@ void _discoverHelperMethods(LibraryMirror library, _DiscoveredRoute route) {
         Put() => ('PUT', annotation),
         Delete() => ('DELETE', annotation),
         Patch() => ('PATCH', annotation),
-        _ => (null, annotation),
+        _ => (null, null),
       };
     }
 

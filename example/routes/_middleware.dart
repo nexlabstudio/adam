@@ -1,16 +1,9 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_frog_openapi/dart_frog_openapi.dart';
+import 'package:example/api_spec.dart';
 
-Handler middleware(Handler handler) {
-  final spec = Volund(
-    title: 'Example API',
-    version: '1.0.0',
-    description: 'A sample API with auto-discovered routes',
-  ).addRoutes(discoverRoutesWithParams({'users/[id]': 'userId'})).generate();
-
-  return handler
-      .use(requestLogger())
-      .use(swaggerUI(spec: spec, docsPath: '/docs'))
-      .use(reDoc(spec: spec, docsPath: '/redoc'))
-      .use(scalar(spec: spec, docsPath: '/scalar'));
-}
+Handler middleware(Handler handler) => handler
+    .use(requestLogger())
+    .use(swaggerUI(spec: apiSpec, docsPath: '/docs'))
+    .use(reDoc(spec: apiSpec, docsPath: '/redoc'))
+    .use(scalar(spec: apiSpec, docsPath: '/scalar'));
