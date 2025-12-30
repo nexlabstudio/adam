@@ -1,6 +1,11 @@
 # dart_frog_openapi (Adam)
 
 <p align="center">
+  <a href="https://github.com/nexlabstudio/adam/actions/workflows/test.yml"><img src="https://github.com/nexlabstudio/adam/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
+  <a href="https://codecov.io/github/nexlabstudio/adam"><img src="https://codecov.io/github/nexlabstudio/adam/graph/badge.svg?token=O4Vo55lvTo" alt="codecov"></a>
+</p>
+
+<p align="center">
   <img src="asset/adam.jpg" alt="Adam - Eyes of the Lord" width="400">
 </p>
 
