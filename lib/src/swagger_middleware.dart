@@ -52,14 +52,18 @@ Middleware autoSwagger({
   }
 
   return (handler) => (context) async {
+    if (context.request.method == HttpMethod.options) {
+      return Response(statusCode: 204, headers: _corsHeaders);
+    }
+
     final path = context.request.uri.path;
 
     if (path == specPath) {
-      return Response.json(body: getSpec());
+      return Response.json(body: getSpec(), headers: _corsHeaders);
     }
 
     if (path == '$specPath.yaml' || path == '/openapi.yaml') {
-      return Response(body: _toYaml(getSpec()), headers: {'Content-Type': 'text/yaml; charset=utf-8'});
+      return Response(body: _toYaml(getSpec()), headers: {..._corsHeaders, 'Content-Type': 'text/yaml; charset=utf-8'});
     }
 
     if (path == docsPath || path == '$docsPath/') {
@@ -69,7 +73,8 @@ Middleware autoSwagger({
       );
     }
 
-    return handler(context);
+    final response = await handler(context);
+    return response.copyWith(headers: {...response.headers, ..._corsHeaders});
   };
 }
 
@@ -92,14 +97,18 @@ Middleware swaggerUI({
   bool? filter,
 }) =>
     (handler) => (context) async {
+      if (context.request.method == HttpMethod.options) {
+        return Response(statusCode: 204, headers: _corsHeaders);
+      }
+
       final path = context.request.uri.path;
 
       if (path == specPath) {
-        return Response.json(body: spec);
+        return Response.json(body: spec, headers: _corsHeaders);
       }
 
       if (specYamlPath != null && path == specYamlPath) {
-        return Response(body: _toYaml(spec), headers: {'Content-Type': 'text/yaml; charset=utf-8'});
+        return Response(body: _toYaml(spec), headers: {..._corsHeaders, 'Content-Type': 'text/yaml; charset=utf-8'});
       }
 
       if (path == docsPath || path == '$docsPath/') {
@@ -127,10 +136,14 @@ Middleware reDoc({
   String specPath = '/openapi.json',
 }) =>
     (handler) => (context) async {
+      if (context.request.method == HttpMethod.options) {
+        return Response(statusCode: 204, headers: _corsHeaders);
+      }
+
       final path = context.request.uri.path;
 
       if (path == specPath) {
-        return Response.json(body: spec);
+        return Response.json(body: spec, headers: _corsHeaders);
       }
 
       if (path == docsPath || path == '$docsPath/') {
@@ -140,7 +153,8 @@ Middleware reDoc({
         );
       }
 
-      return handler(context);
+      final response = await handler(context);
+      return response.copyWith(headers: {...response.headers, ..._corsHeaders});
     };
 
 /// Serves Scalar API documentation.
@@ -151,10 +165,14 @@ Middleware scalar({
   String specPath = '/openapi.json',
 }) =>
     (handler) => (context) async {
+      if (context.request.method == HttpMethod.options) {
+        return Response(statusCode: 204, headers: _corsHeaders);
+      }
+
       final path = context.request.uri.path;
 
       if (path == specPath) {
-        return Response.json(body: spec);
+        return Response.json(body: spec, headers: _corsHeaders);
       }
 
       if (path == docsPath || path == '$docsPath/') {
@@ -164,7 +182,8 @@ Middleware scalar({
         );
       }
 
-      return handler(context);
+      final response = await handler(context);
+      return response.copyWith(headers: {...response.headers, ..._corsHeaders});
     };
 
 String _swaggerHtml({
@@ -299,3 +318,9 @@ String _yamlValue(dynamic value) => switch (value) {
 };
 
 bool _needsQuotes(String s) => ['\n', ':', '#', '"', "'"].any(s.contains) || s.startsWith(' ') || s.endsWith(' ');
+
+const _corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+  'Access-Control-Allow-Headers': 'Origin, Content-Type, Authorization, X-API-Key',
+};
