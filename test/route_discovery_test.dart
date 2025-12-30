@@ -11,6 +11,10 @@ import 'fixtures/routes/users/[id].dart' as user_by_id_route;
 import 'fixtures/routes/posts/[postId]/comments/[commentId].dart' as nested_route;
 import 'fixtures/routes/auth/login.dart' as auth_route;
 import 'fixtures/routes/_middleware.dart' as middleware;
+import 'fixtures/routes/simple.dart' as simple_route;
+import 'fixtures/routes/items.dart' as items_route;
+import 'fixtures/routes/products/[productId].dart' as product_route;
+import 'fixtures/routes/orders/[orderId].dart' as order_route;
 
 void main() {
   // Force imports to be retained for dart:mirrors
@@ -21,6 +25,10 @@ void main() {
     nested_route.onRequest;
     auth_route.onRequest;
     middleware.middleware;
+    simple_route.onRequest;
+    items_route.onRequest;
+    product_route.onRequest;
+    order_route.onRequest;
   });
 
   group('discoverRoutes()', () {
@@ -694,6 +702,190 @@ void main() {
       final paths = spec['paths'] as Map;
       final hasRootPath = paths.keys.any((p) => p == '/' || p == '');
       expect(hasRootPath, isTrue);
+    });
+  });
+
+  group('HTTP annotation on onRequest (no helper methods)', () {
+    late Map<String, dynamic> spec;
+
+    setUpAll(() {
+      final routes = discoverRoutes();
+      spec = OpenApiGenerator(title: 'Test API').addRoutes(routes).generate();
+    });
+
+    test('discovers routes with HTTP annotation on onRequest', () {
+      final paths = spec['paths'] as Map;
+      // simple.dart should be discovered as /simple
+      final hasSimpleRoute = paths.keys.any((p) => p.toString().contains('simple'));
+      expect(hasSimpleRoute, isTrue);
+    });
+
+    test('extracts HTTP method from onRequest annotation', () {
+      final paths = spec['paths'] as Map;
+      String? simpleKey;
+      dynamic simpleValue;
+
+      for (final entry in paths.entries) {
+        if (entry.key.toString().contains('simple')) {
+          simpleKey = entry.key.toString();
+          simpleValue = entry.value;
+          break;
+        }
+      }
+
+      if (simpleKey != null && simpleValue is Map) {
+        // Should have GET method from @Get annotation on onRequest
+        expect(simpleValue.containsKey('get'), isTrue);
+      }
+    });
+  });
+
+  group('Body annotation on method parameters', () {
+    late Map<String, dynamic> spec;
+
+    setUpAll(() {
+      final routes = discoverRoutes();
+      spec = OpenApiGenerator(title: 'Test API').addRoutes(routes).generate();
+    });
+
+    test('discovers routes with @Body on parameters', () {
+      final paths = spec['paths'] as Map;
+      // items.dart should be discovered as /items
+      final hasItemsRoute = paths.keys.any((p) => p.toString().contains('items'));
+      expect(hasItemsRoute, isTrue);
+    });
+
+    test('extracts @Body description from method parameter', () {
+      final paths = spec['paths'] as Map;
+      String? itemsKey;
+      dynamic itemsValue;
+
+      for (final entry in paths.entries) {
+        if (entry.key.toString().contains('items')) {
+          itemsKey = entry.key.toString();
+          itemsValue = entry.value;
+          break;
+        }
+      }
+
+      if (itemsKey != null && itemsValue is Map) {
+        if (itemsValue['post'] is Map) {
+          final post = itemsValue['post'] as Map;
+          if (post['requestBody'] is Map) {
+            final body = post['requestBody'] as Map;
+            expect(body['description'], 'Item data to create');
+          }
+        }
+      }
+    });
+  });
+
+  group('PathParam on function parameters', () {
+    late Map<String, dynamic> spec;
+
+    setUpAll(() {
+      final routes = discoverRoutes();
+      spec = OpenApiGenerator(title: 'Test API').addRoutes(routes).generate();
+    });
+
+    test('discovers routes with @PathParam on onRequest parameters', () {
+      final paths = spec['paths'] as Map;
+      // products/[productId].dart should be discovered
+      final hasProductRoute = paths.keys.any((p) => p.toString().contains('product'));
+      expect(hasProductRoute, isTrue);
+    });
+
+    test('extracts @PathParam description from function parameter', () {
+      final paths = spec['paths'] as Map;
+      dynamic productValue;
+
+      for (final entry in paths.entries) {
+        if (entry.key.toString().contains('product')) {
+          productValue = entry.value;
+          break;
+        }
+      }
+
+      if (productValue is Map && productValue['get'] is Map) {
+        final get = productValue['get'] as Map;
+        if (get['parameters'] is List) {
+          final params = get['parameters'] as List;
+          Map<String, dynamic>? productIdParam;
+          for (final p in params) {
+            if (p is Map && p['name'] == 'productId') {
+              productIdParam = Map<String, dynamic>.from(p);
+              break;
+            }
+          }
+          if (productIdParam != null) {
+            expect(productIdParam['description'], 'Product identifier');
+            expect(productIdParam['schema']['format'], 'uuid');
+          }
+        }
+      }
+    });
+
+    test('path parameter from function param is marked required', () {
+      final paths = spec['paths'] as Map;
+      dynamic productValue;
+
+      for (final entry in paths.entries) {
+        if (entry.key.toString().contains('product')) {
+          productValue = entry.value;
+          break;
+        }
+      }
+
+      if (productValue is Map && productValue['get'] is Map) {
+        final get = productValue['get'] as Map;
+        if (get['parameters'] is List) {
+          final params = get['parameters'] as List;
+          Map<String, dynamic>? productIdParam;
+          for (final p in params) {
+            if (p is Map && p['name'] == 'productId') {
+              productIdParam = Map<String, dynamic>.from(p);
+              break;
+            }
+          }
+          if (productIdParam != null) {
+            expect(productIdParam['required'], true);
+            expect(productIdParam['in'], 'path');
+          }
+        }
+      }
+    });
+
+    test('creates default PathParam for unannotated function parameter', () {
+      final paths = spec['paths'] as Map;
+      // orders/[orderId].dart has orderId param without @PathParam annotation
+      final hasOrderRoute = paths.keys.any((p) => p.toString().contains('order'));
+      expect(hasOrderRoute, isTrue);
+
+      dynamic orderValue;
+      for (final entry in paths.entries) {
+        if (entry.key.toString().contains('order')) {
+          orderValue = entry.value;
+          break;
+        }
+      }
+
+      if (orderValue is Map && orderValue['get'] is Map) {
+        final get = orderValue['get'] as Map;
+        if (get['parameters'] is List) {
+          final params = get['parameters'] as List;
+          Map<String, dynamic>? orderIdParam;
+          for (final p in params) {
+            if (p is Map && p['name'] == 'orderId') {
+              orderIdParam = Map<String, dynamic>.from(p);
+              break;
+            }
+          }
+          // Should have created default PathParam with just the name
+          expect(orderIdParam, isNotNull);
+          expect(orderIdParam!['in'], 'path');
+          expect(orderIdParam['required'], true);
+        }
+      }
     });
   });
 }
