@@ -513,6 +513,107 @@ void main() {
       // null values should be skipped
       expect(yaml, isNot(contains('description: null')));
     });
+
+    test('handles arrays with primitive string values', () async {
+      final spec = {
+        'openapi': '3.0.3',
+        'info': {'title': 'Test', 'version': '1.0.0'},
+        'tags': ['users', 'posts', 'comments'],
+        'paths': <String, dynamic>{},
+      };
+
+      final middleware = swaggerUI(spec: spec, specYamlPath: '/openapi.yaml');
+      final handler = middleware((_) async => Response());
+
+      final context = _MockRequestContext(Request.get(Uri.parse('http://localhost/openapi.yaml')));
+      final response = await handler(context);
+
+      final yaml = await response.body();
+      expect(yaml, contains('tags:'));
+      expect(yaml, contains('  - users'));
+      expect(yaml, contains('  - posts'));
+      expect(yaml, contains('  - comments'));
+    });
+
+    test('handles arrays with primitive number values', () async {
+      final spec = {
+        'openapi': '3.0.3',
+        'info': {'title': 'Test', 'version': '1.0.0'},
+        'codes': [200, 201, 404, 500],
+        'paths': <String, dynamic>{},
+      };
+
+      final middleware = swaggerUI(spec: spec, specYamlPath: '/openapi.yaml');
+      final handler = middleware((_) async => Response());
+
+      final context = _MockRequestContext(Request.get(Uri.parse('http://localhost/openapi.yaml')));
+      final response = await handler(context);
+
+      final yaml = await response.body();
+      expect(yaml, contains('codes:'));
+      expect(yaml, contains('  - 200'));
+      expect(yaml, contains('  - 404'));
+    });
+
+    test('handles arrays with boolean values', () async {
+      final spec = {
+        'openapi': '3.0.3',
+        'info': {'title': 'Test', 'version': '1.0.0'},
+        'flags': [true, false, true],
+        'paths': <String, dynamic>{},
+      };
+
+      final middleware = swaggerUI(spec: spec, specYamlPath: '/openapi.yaml');
+      final handler = middleware((_) async => Response());
+
+      final context = _MockRequestContext(Request.get(Uri.parse('http://localhost/openapi.yaml')));
+      final response = await handler(context);
+
+      final yaml = await response.body();
+      expect(yaml, contains('flags:'));
+      expect(yaml, contains('  - true'));
+      expect(yaml, contains('  - false'));
+    });
+
+    test('handles arrays with null values', () async {
+      final spec = {
+        'openapi': '3.0.3',
+        'info': {'title': 'Test', 'version': '1.0.0'},
+        'values': ['a', null, 'b'],
+        'paths': <String, dynamic>{},
+      };
+
+      final middleware = swaggerUI(spec: spec, specYamlPath: '/openapi.yaml');
+      final handler = middleware((_) async => Response());
+
+      final context = _MockRequestContext(Request.get(Uri.parse('http://localhost/openapi.yaml')));
+      final response = await handler(context);
+
+      final yaml = await response.body();
+      expect(yaml, contains('values:'));
+      expect(yaml, contains('  - a'));
+      expect(yaml, contains('  - null'));
+      expect(yaml, contains('  - b'));
+    });
+
+    test('handles arrays with custom object types using toString', () async {
+      final spec = {
+        'openapi': '3.0.3',
+        'info': {'title': 'Test', 'version': '1.0.0'},
+        'custom': [_CustomType('test')],
+        'paths': <String, dynamic>{},
+      };
+
+      final middleware = swaggerUI(spec: spec, specYamlPath: '/openapi.yaml');
+      final handler = middleware((_) async => Response());
+
+      final context = _MockRequestContext(Request.get(Uri.parse('http://localhost/openapi.yaml')));
+      final response = await handler(context);
+
+      final yaml = await response.body();
+      expect(yaml, contains('custom:'));
+      expect(yaml, contains('CustomType(test)'));
+    });
   });
 
   group('autoSwagger middleware', () {
@@ -743,4 +844,13 @@ class _MockRequestContext implements RequestContext {
     _providers[T] = create();
     return this;
   }
+}
+
+/// Custom type for testing toString fallback in YAML generation
+class _CustomType {
+  _CustomType(this.value);
+  final String value;
+
+  @override
+  String toString() => 'CustomType($value)';
 }

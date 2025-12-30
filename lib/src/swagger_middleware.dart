@@ -278,29 +278,31 @@ String _toYaml(Map<String, dynamic> data, [int indent = 0]) {
 
     if (value == null) continue;
 
-    if (value is Map<String, dynamic>) {
-      if (value.isEmpty) {
-        buffer.writeln('$spaces$key: {}');
-      } else {
-        buffer.writeln('$spaces$key:');
-        buffer.write(_toYaml(value, indent + 1));
-      }
-    } else if (value is List) {
-      if (value.isEmpty) {
-        buffer.writeln('$spaces$key: []');
-      } else {
-        buffer.writeln('$spaces$key:');
-        for (final item in value) {
-          if (item is Map<String, dynamic>) {
-            buffer.writeln('$spaces  -');
-            buffer.write(_toYaml(item, indent + 2));
-          } else {
-            buffer.writeln('$spaces  - ${_yamlValue(item)}');
+    switch (value) {
+      case Map<String, dynamic>():
+        if (value.isEmpty) {
+          buffer.writeln('$spaces$key: {}');
+        } else {
+          buffer.writeln('$spaces$key:');
+          buffer.write(_toYaml(value, indent + 1));
+        }
+      case List():
+        if (value.isEmpty) {
+          buffer.writeln('$spaces$key: []');
+        } else {
+          buffer.writeln('$spaces$key:');
+          for (final item in value) {
+            switch (item) {
+              case Map<String, dynamic>():
+                buffer.writeln('$spaces  -');
+                buffer.write(_toYaml(item, indent + 2));
+              case _:
+                buffer.writeln('$spaces  - ${_yamlValue(item)}');
+            }
           }
         }
-      }
-    } else {
-      buffer.writeln('$spaces$key: ${_yamlValue(value)}');
+      case _:
+        buffer.writeln('$spaces$key: ${_yamlValue(value)}');
     }
   }
 
