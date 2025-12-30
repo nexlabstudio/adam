@@ -84,29 +84,21 @@ void _discoverHelperMethods(LibraryMirror library, _DiscoveredRoute route) {
 
     for (final meta in decl.metadata) {
       final annotation = meta.reflectee;
-      if (annotation is Get) {
-        httpMethod = 'GET';
-        operationAnnotation = annotation;
-      } else if (annotation is Post) {
-        httpMethod = 'POST';
-        operationAnnotation = annotation;
-      } else if (annotation is Put) {
-        httpMethod = 'PUT';
-        operationAnnotation = annotation;
-      } else if (annotation is Delete) {
-        httpMethod = 'DELETE';
-        operationAnnotation = annotation;
-      } else if (annotation is Patch) {
-        httpMethod = 'PATCH';
-        operationAnnotation = annotation;
-      }
+      (httpMethod, operationAnnotation) = switch (annotation) {
+        Get() => ('GET', annotation),
+        Post() => ('POST', annotation),
+        Put() => ('PUT', annotation),
+        Delete() => ('DELETE', annotation),
+        Patch() => ('PATCH', annotation),
+        _ => (null, annotation),
+      };
     }
 
     // Only add if it has an HTTP method annotation
-    if (httpMethod != null) {
+    if (httpMethod case final method?) {
       route.methods[httpMethod] = _DiscoveredMethod(
         name: name,
-        method: httpMethod,
+        method: method,
         mirror: decl,
         operation: operationAnnotation,
       );
@@ -610,24 +602,24 @@ class OpenApiGenerator {
       'required': param.required ?? (location == 'path' || required),
     };
 
-    if (param.description != null) {
-      result['description'] = param.description;
+    if (param.description case final description?) {
+      result['description'] = description;
     }
 
     final schema = <String, dynamic>{'type': param.type};
-    if (param.format != null) {
-      schema['format'] = param.format;
+    if (param.format case final format?) {
+      schema['format'] = format;
     }
-    if (param.enumValues != null) {
-      schema['enum'] = param.enumValues;
+    if (param.enumValues case final enumValues?) {
+      schema['enum'] = enumValues;
     }
-    if (param.defaultValue != null) {
-      schema['default'] = param.defaultValue;
+    if (param.defaultValue case final defaultValue?) {
+      schema['default'] = defaultValue;
     }
     result['schema'] = schema;
 
-    if (param.example != null) {
-      result['example'] = param.example;
+    if (param.example case final example?) {
+      result['example'] = example;
     }
 
     return result;
@@ -636,8 +628,8 @@ class OpenApiGenerator {
   Map<String, dynamic> _buildRequestBody(_BodyInfo body) {
     final result = <String, dynamic>{'required': body.required};
 
-    if (body.description != null) {
-      result['description'] = body.description;
+    if (body.description case final description?) {
+      result['description'] = description;
     }
 
     final mediaType = <String, dynamic>{};
@@ -654,8 +646,8 @@ class OpenApiGenerator {
       }
     }
 
-    if (body.example != null) {
-      mediaType['example'] = body.example;
+    if (body.example case final example?) {
+      mediaType['example'] = example;
     }
 
     result['content'] = {body.contentType: mediaType};
@@ -772,63 +764,70 @@ class OpenApiGenerator {
     for (final meta in metadata) {
       final annotation = meta.reflectee;
 
-      if (annotation is PathParam) {
-        op.pathParams.add(
-          _ParamInfo(
-            name: annotation.name,
-            description: annotation.description,
-            type: annotation.type,
-            format: annotation.format,
-            example: annotation.example,
-          ),
-        );
-      } else if (annotation is QueryParam) {
-        op.queryParams.add(
-          _ParamInfo(
-            name: annotation.name,
-            description: annotation.description,
-            required: annotation.required,
-            type: annotation.type,
-            format: annotation.format,
-            defaultValue: annotation.defaultValue,
-            example: annotation.example,
-            enumValues: annotation.enumValues,
-          ),
-        );
-      } else if (annotation is HeaderParam) {
-        op.headerParams.add(
-          _ParamInfo(
-            name: annotation.name,
-            description: annotation.description,
-            required: annotation.required,
-            example: annotation.example,
-          ),
-        );
-      } else if (annotation is Body) {
-        op.body = _BodyInfo(
-          schemaType: annotation.schema,
-          schemaName: annotation.schema != null ? _getTypeName(annotation.schema!) : null,
-          description: annotation.description,
-          required: annotation.required,
-          contentType: annotation.contentType,
-          example: annotation.example,
-        );
-      } else if (annotation is ApiResponse) {
-        op.responses.add(
-          _ResponseInfo(
-            statusCode: annotation.statusCode,
-            description: annotation.description,
+      switch (annotation) {
+        case PathParam():
+          op.pathParams.add(
+            _ParamInfo(
+              name: annotation.name,
+              description: annotation.description,
+              type: annotation.type,
+              format: annotation.format,
+              example: annotation.example,
+            ),
+          );
+        case QueryParam():
+          op.queryParams.add(
+            _ParamInfo(
+              name: annotation.name,
+              description: annotation.description,
+              required: annotation.required,
+              type: annotation.type,
+              format: annotation.format,
+              defaultValue: annotation.defaultValue,
+              example: annotation.example,
+              enumValues: annotation.enumValues,
+            ),
+          );
+        case HeaderParam():
+          op.headerParams.add(
+            _ParamInfo(
+              name: annotation.name,
+              description: annotation.description,
+              required: annotation.required,
+              example: annotation.example,
+            ),
+          );
+        case Body():
+          op.body = _BodyInfo(
             schemaType: annotation.schema,
-            schemaName: annotation.schema != null ? _getTypeName(annotation.schema!) : null,
-            isArray: annotation.isArray,
+            schemaName: switch (annotation.schema) {
+              final schema? => _getTypeName(schema),
+              _ => null,
+            },
+            description: annotation.description,
+            required: annotation.required,
             contentType: annotation.contentType,
             example: annotation.example,
-          ),
-        );
-      } else if (annotation is Security) {
-        op.security.add(_SecurityInfo(scheme: annotation.scheme, scopes: annotation.scopes));
-      } else if (annotation is Public) {
-        op.isPublic = true;
+          );
+        case ApiResponse():
+          op.responses.add(
+            _ResponseInfo(
+              statusCode: annotation.statusCode,
+              description: annotation.description,
+              schemaType: annotation.schema,
+              schemaName: switch (annotation.schema) {
+                final schema? => _getTypeName(schema),
+                _ => null,
+              },
+              isArray: annotation.isArray,
+              contentType: annotation.contentType,
+              example: annotation.example,
+            ),
+          );
+        case Security():
+          op.security.add(_SecurityInfo(scheme: annotation.scheme, scopes: annotation.scopes));
+        case Public():
+          op.isPublic = true;
       }
     }
   }
@@ -846,7 +845,7 @@ class OpenApiGenerator {
     for (final meta in classMirror.metadata) {
       final annotation = meta.reflectee;
       if (annotation is ApiSchema) {
-        if (annotation.name != null) info.name = annotation.name!;
+        if (annotation.name case final annotationName?) info.name = annotationName;
         info.description = annotation.description;
       }
     }
@@ -875,23 +874,24 @@ class OpenApiGenerator {
         // Extract @ApiProperty annotation
         for (final meta in declaration.metadata) {
           final annotation = meta.reflectee;
-          if (annotation is ApiProperty) {
-            prop.description = annotation.description;
-            prop.required = annotation.required;
-            prop.nullable = annotation.nullable;
-            if (annotation.format != null) prop.format = annotation.format;
-            prop.example = annotation.example;
-            prop.defaultValue = annotation.defaultValue;
-            prop.minimum = annotation.minimum;
-            prop.maximum = annotation.maximum;
-            prop.minLength = annotation.minLength;
-            prop.maxLength = annotation.maxLength;
-            prop.pattern = annotation.pattern;
-            prop.enumValues = annotation.enumValues;
-          } else if (annotation is ApiReadOnly) {
-            prop.readOnly = true;
-          } else if (annotation is ApiWriteOnly) {
-            prop.writeOnly = true;
+          switch (annotation) {
+            case ApiProperty():
+              prop.description = annotation.description;
+              prop.required = annotation.required;
+              prop.nullable = annotation.nullable;
+              prop.format = annotation.format;
+              prop.example = annotation.example;
+              prop.defaultValue = annotation.defaultValue;
+              prop.minimum = annotation.minimum;
+              prop.maximum = annotation.maximum;
+              prop.minLength = annotation.minLength;
+              prop.maxLength = annotation.maxLength;
+              prop.pattern = annotation.pattern;
+              prop.enumValues = annotation.enumValues;
+            case ApiReadOnly():
+              prop.readOnly = true;
+            case ApiWriteOnly():
+              prop.writeOnly = true;
           }
         }
 
@@ -907,46 +907,23 @@ class OpenApiGenerator {
     return MirrorSystem.getName(mirror.simpleName);
   }
 
-  String _dartTypeToJsonType(TypeMirror typeMirror) {
-    final name = MirrorSystem.getName(typeMirror.simpleName);
+  String _dartTypeToJsonType(TypeMirror typeMirror) => switch (MirrorSystem.getName(typeMirror.simpleName)) {
+    'String' => 'string',
+    'int' => 'integer',
+    'double' || 'num' => 'number',
+    'bool' => 'boolean',
+    'DateTime' => 'string',
+    'List' => 'array',
+    'Map' || _ => 'object',
+  };
 
-    switch (name) {
-      case 'String':
-        return 'string';
-      case 'int':
-        return 'integer';
-      case 'double':
-      case 'num':
-        return 'number';
-      case 'bool':
-        return 'boolean';
-      case 'DateTime':
-        return 'string';
-      case 'List':
-        return 'array';
-      case 'Map':
-        return 'object';
-      default:
-        return 'object';
-    }
-  }
-
-  String? _dartTypeToFormat(TypeMirror typeMirror) {
-    final name = MirrorSystem.getName(typeMirror.simpleName);
-
-    switch (name) {
-      case 'DateTime':
-        return 'date-time';
-      case 'Uri':
-        return 'uri';
-      case 'int':
-        return 'int64';
-      case 'double':
-        return 'double';
-      default:
-        return null;
-    }
-  }
+  String? _dartTypeToFormat(TypeMirror typeMirror) => switch (MirrorSystem.getName(typeMirror.simpleName)) {
+    'DateTime' => 'date-time',
+    'Uri' => 'uri',
+    'int' => 'int64',
+    'double' => 'double',
+    _ => null,
+  };
 }
 
 // Internal data classes
@@ -1052,7 +1029,7 @@ class _SchemaInfo {
   Map<String, dynamic> toJson() {
     final result = <String, dynamic>{'type': 'object'};
 
-    if (description != null) {
+    if (description case final description?) {
       result['description'] = description;
     }
 
